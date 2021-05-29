@@ -27,6 +27,6 @@ jobs:
     - name: Unit Tests - Business
       run: dotnet test tests/DevOpsChallenge.SalesApi.Business.UnitTests/bin/Release/net5.0/publish/DevOpsChallenge.SalesApi.Business.UnitTests.dll --collect:"XPlat Code Coverage"
     - name: Echo Test Results
-      run: 
+      run: find TestResults coverage.cobertura.xml
     - name: Echo Build Version
       run: git describe --all --long | cut -d "-" -f 3
