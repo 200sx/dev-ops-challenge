@@ -32,12 +32,20 @@ jobs:
     - name: Echo Build Version
       run: echo ${{ github.sha }}
     # If tests are successful, push to ECR
-    - name: Push Image to ECR
-      uses: docker://ghcr.io/kciter/aws-ecr-action:latest
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
       with:
-        access_key_id: ${{ secrets.AWS_ID }}
-        secret_access_key: ${{ secrets.AWS_SECRET }}
-        account_id: 201293276503
-        repo: app
-        region: ap-southeast-2
-        tags: latest,${{ github.sha }}
+        aws-access-key-id: ${{ secrets.AWS_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET }}
+        aws-region: ap-southeast-2
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+    - name: Build, tag, and push image to Amazon ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: 201293276503.dkr.ecr.ap-southeast-2.amazonaws.com
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
