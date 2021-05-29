@@ -9,12 +9,16 @@ on:
 jobs:
   build:
 
-    runs-on: mcr.microsoft.com/dotnet/aspnet:5.0
+    runs-on: ubuntu-latest
 
     steps:
     # This step checks out the code using github actions (prebuilt module)
     - uses: actions/checkout@v2
     # This step sets up the .NET environment required for application build
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
     # Build and test phase of pipeline
     - name: Restore dependencies
       run: dotnet restore
