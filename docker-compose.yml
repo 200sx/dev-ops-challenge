@@ -1,0 +1,22 @@
+version: "3.3"
+services:
+    # Database server 
+    mssql:
+        image: "mcr.microsoft.com/mssql/server:2019-latest"
+        container_name: mssql
+        ports:
+        - "1433:1433"
+        environment:
+            SA_PASSWORD: "Lolcats12#"
+            ACCEPT_EULA: "Y"
+    
+    app:
+        image: "app:latest"
+        container_name: app
+        ports:
+        - "5000:5000"
+        environment:
+            - CONNECTIONSTRINGS__DATABASE=Server=mssql,1433;Database=DevOpsChallenge.SalesApi;Trusted_Connection=False;ConnectRetryCount=0;User Id=sa;Password=Lolcats12#
+            - SALES_API_ENDPOINT=http://localhost:5000
+        depends_on:
+        - mssql
