@@ -7,10 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  build-image:
-
+  build-and-test:
     runs-on: ubuntu-latest
-
     steps:
     # This step checks out the code using github actions (prebuilt module)
     - uses: actions/checkout@v2
@@ -20,9 +18,15 @@ jobs:
       with:
         dotnet-version: 5.0.x
     # Build and test phase of pipeline
-    - name: Restore dependencies
+    - name: Dotnet Restore
       run: dotnet restore
-    - name: Build
+    - name: Dotnet Build
       run: dotnet build --no-restore -c Release
-    - name: Test
-      run: dotnet test tests/DevOpsChallenge.SalesApi.Business.UnitTests/bin/Release/net5.0/DevOpsChallenge.SalesApi.Business.UnitTests.dll --collect:"XPlat Code Coverage"
+    - name: Dotnet Publish
+      run: dotnet publish -c Release
+    - name: Unit Tests - Business
+      run: dotnet test tests/DevOpsChallenge.SalesApi.Business.UnitTests/bin/Release/net5.0/publish/DevOpsChallenge.SalesApi.Business.UnitTests.dll --collect:"XPlat Code Coverage"
+    - name: Echo Test Results
+      run: 
+    - name: Echo Build Version
+      run: git describe --all --long | cut -d "-" -f 3
