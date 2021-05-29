@@ -7,8 +7,9 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-test:
+  test-and-build-image:
     runs-on: macos-10.15
+    environment: development_environment
     steps:
     # This step checks out the code using github actions (prebuilt module)
     - uses: actions/checkout@v2
@@ -29,4 +30,14 @@ jobs:
     - name: Echo Test Results
       run: cat $(find TestResults -name coverage.cobertura.xml) 
     - name: Echo Build Version
-      run: git describe --all --long | cut -d "-" -f 3
+      run: echo ${{ github.sha }}
+    # If tests are successful, push to ECR
+    - name: Push Image to ECR
+      uses: docker://ghcr.io/kciter/aws-ecr-action:latest
+      with:
+        access_key_id: ${{ secrets.AWS_ID }}
+        secret_access_key: ${{ secrets.AWS_SECRET }}
+        account_id: 201293276503
+        repo: app
+        region: ap-southeast-2
+        tags: latest,${{ github.sha }}
