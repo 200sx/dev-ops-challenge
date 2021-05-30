@@ -15,6 +15,7 @@ await Host.CreateDefaultBuilder(args)
     })
     .ConfigureWebHostDefaults(webBuilder =>
     {
-        webBuilder.UseStartup<Startup>();
+        // explicitly adding rule to not send server header from Kestrel
+        webBuilder.UseStartup<Startup>().UseKestrel(options => options.AddServerHeader = false);;
     })
     .RunConsoleAsync();
