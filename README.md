@@ -1,69 +1,68 @@
-# DevOps Challenge (.NET)
+# DevOps Challenge (.NET) Deployment Guide
 
-## Introduction :wave:
+## IDE Setup
+This asset deployment is made to be run in a Linux/macOS environment hence may not apply to Windows developers. Also there are pecularities within the setup due to the UNIX based environment.
+## Steps
+1. Install the DOTNET runtime
+    - Dotnet - https://dotnet.microsoft.com/download/dotnet/5.0
+2. Install Docker for Desktop
+    - Docker - https://docs.docker.com/docker-for-mac/install/
+3. Install CLI tools for MSSQL
+    ``` shell
+    brew tap microsoft/mssql-release https://github.com/Microsoft/homebrew-mssql-release
+    brew update
+    brew install –no-sandbox msodbcsql mssql-tools
+    ```
 
-This challenge utilises the broad range of skills required by a DevOps Engineer. It focuses on DevOps for a .NET 5 application.
+## Local Environment Deployment
+A **docker-compose** has been provided, please look at it to understand how the microservices communicate. The below command will bring up all the required containers and place them in a network. Both services exposed on host for direct commands into database or API calls into API via POSTMAN.
+```bash
+docker-compose up mssql #bring up just db
+docker-compose up #bring up the whole stack
+```
+NOTE: The docker-compose is utilised in the pipelines to pull from ECR. If you have a local image, please replace the image annotation as required. Don't commit this!
 
-In completing the challenge, you're welcome to change all aspects of the initial repository, including:
-* Directory and file structure.
-* Solution and project names.
-* Namespaces and class names.
-* Code, data, and settings files.
-* NuGet packages and dependencies.
-* This README!
+To interact with the database via CLI, the port is already exposed on the host and you can run a command like below to query the DB directly.
+``` basg
+sqlcmd -S localhost  -U sa -P Lolcats12# -Q "SELECT @@VERSION"
+```
 
-The solution should represent best practices, even if the starting solution is lacking them.
+## Notes for the Assessor
+Thanks for letting me have a go at the challenge. It was fun to learn a bit more about how dotnet applications work and tear into DLL hell for the first time. I've also been meaning to check out modern CICD tooling (I've mainly used Jenkins) as I wanted to upgrade to a more modern system implemented at work (Groovy is a pain to maintain, not as readable and there's something cool in having everything DevOps related in YAML/bash).
 
-You'll need .NET 5 and SQL Server Local DB to build and run the application locally. On a Mac or Linux device, you can update the connection string (in `appsettings.Development.json` and `DatabaseContextDesignTimeFactory.cs`) and use Docker to launch SQL Server Developer Edition.
+More onto the solution, it does the follwing;
+- Pipeline Setup
+    - Utilised GitHub actions and integrated with ECR as a container store, keys provided on the GitHub side for security
+    - docker-compose utilised to bring up integration test environment and also allow easy local deployment
+    - Pipeline tags the image version to git commit as a simple form of versioning, also tags image as latest for testing runs
+    - Utilised a .gitignore file set up for dotnet projects
+- Image
+    - Image runs as a non-root user for security
+    - Fixed swagger annotations to provide comments on swaggerdocs
+    - Removed Kestrel header being sent in API payloads (read challenges section)
+    - Added environmental flag to enhance security
+    - Application image has a custom entrypoint in case startup tasks are required prior to runtime
+- Testing Process
+    - Unit tests are run prior to image building, and uses a clean build of the application
+    - Integration tests are run if deployment succeeds, and uses image from ECR as source of truth
+    - Code Coverage reports are generated and printed in pipeline logs (improvements highlighed below)
 
-## Scenario :blue_book:
+## Improvements and Challenges
+Things to improve;
+- Integration tests do run but fail due to database login failure
+    - This is probably because the database doesn't have the schmas set up, if I had more time I'd have liked to learn more about how DOTNET applications can inherently set up the schemas on startup alike mongock.
+    - Due to this issue, even though the Kestrel issue is fixed on paper, I was unable to test it
+- The code coverage results are in the pipeline as a proof of concept. Ideally I would have liked to use the cobertura report and generate a HTML page uploaded on S3 for readability. SSO could be implemented here for security. 
+- Passwords stored in plaintext in docker-compose, parameterise this and pull from secrets
+- Implement a configurations file for all variables, to reduce code duplication and deployment issues. Azure DevOps seems to handle this nicer than GitHub actions
+- In the image, there is an ENV VAR **DOTNET_EnableDiagnostics=0** which was recommended in the MS deployment docs. Ideally I would presume this would be disabled for non-release containers for dev/debugging purposes. I've left it there because I didn't utilise those features in my pipelines.
+- Use a lean runtime container, need to do more research on which is the best container for published release
+- Seperate out Integration Test pipeline to allow finer control on triggers
+- MSSQL container is large, pulling all the layers into the VM during integration tests can be delayed depending on if the VM was warm or not (GitHub Actions limitation) - need to remediate this, ADO does it better.
+- Setting CPU and RAM limitations on the application - requires performance testing to find ideal limits in production
 
-You're a DevOps Engineer working in a small team to launch a new application. The management team will use the new application to view and report on daily sales data.
+Challenges I faced;
+- macOS setup locally was fine but GitHub actions support for macOS is poor [(especially docker actions)](https://github.com/actions/runner/issues/715)
+    - There was also an issue with the Code Coverage package used, initially I used the MSBuild package which was fine but it didn't work on GitHub with how I ran the tests so I ended up using the XPlat package.
+- Ideally I would have run everything on a Windows Environment with an IDE like Visual Studio. I used VSCode due to lack of Windows environment.
 
-The development team have built a new API to ingest sales data from an existing system and provide endpoints for viewing and reporting the data. A future application will provide a user interface.
-
-*Note: For simplicity of the solution, the API does not require authentication. Don't do this in a real application!*
-
-## Challenge :question:
-
-You should:
-
-1. Introduce best practices into the solution to ensure a high-quality deliverable and a great developer experience.
-
-2. Build and package the application as a container in a CI/CD pipeline ready for deployment
-
-You'll need to select a CI/CD tool to complete the challenge. Feel free to use your preferred platform, such as GitHub Actions, Azure Pipelines, Circle CI, or Travis CI.
-
-*Note: This challenge does NOT require infrastructure provisioning or deployment. This challenge has designed to be possible without incurring any licencing, hosting or tooling costs.*
-
-## Opportunities (optional) :zap:
-
-You've received feedback on the application from members of the project team. Optionally, fix these issues, or provide instructions back to the developer on the next steps to take:
-
-1. The front end developer consuming the Sales API has mentioned the Swagger UI interface doesn't contain descriptions of operations, parameters, or responses. The Swagger UI interface should display the code comments written by the API developer.
-
-2. The security team have identified the application is revealing the technology used by sending the response header `Server: Kestrel`. This header should not be present in responses sent by the server.
-
-3. The database administrator has identified poor query performance when a sale record is retrieved using its transaction ID. They have recommended creating an index.
-
-## Effort :clock5:
-
-Spend as much or as little time as you like on this challenge. DevOps Engineers wear many hats :crown:, and there's always more opportunity for change and improvement. **Limit yourself to the time you have. Make the changes that deliver the most value.**
-
-If you're looking for inspiration of changes to make, consider:
-
-* Getting started documentation for a new developer.
-* Configuring Git's behaviour for particular files.
-* Versioning of artifacts.
-* Linting and code quality analysis.
-* Scanning for code vulnerabilities.
-* Running unit tests.
-* Assessing code coverage.
-* Indexing PDBs for debugging in a deployed environment.
-* Preparing to run integration tests on a deployed environment.
-* Preparing to deploy database schema migrations.
-* Generating a client for the API.
-
-There's always more to learn and do. **You don't need to do all of these to demonstrate your ability.** This list is a suggestion of ideas. You're welcome to do something else.
-
-Be kind to yourself, and enjoy the challenge. :heart:
