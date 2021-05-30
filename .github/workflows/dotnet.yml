@@ -61,15 +61,13 @@ jobs:
   integration-test:
     runs-on: ubuntu-latest
     environment: development_environment
+    needs: unittest-deploy-image
     steps:
     # This step checks out the code using github actions (prebuilt module)
     - uses: actions/checkout@v2
-    # Build the images 
+    # Run Integration Test Environment in Docker
     - name: Build docker images
-      run: docker-compose build
-    # Run containers 
-    - name: Setup Environment
-      run: docker-compose start
+      run: docker-compose up
     # Publish and run test suite
     - name: Dotnet Publish
       run: dotnet publish -c Release
