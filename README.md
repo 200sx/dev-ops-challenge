@@ -66,3 +66,6 @@ Challenges I faced;
     - There was also an issue with the Code Coverage package used, initially I used the MSBuild package which was fine but it didn't work on GitHub with how I ran the tests so I ended up using the XPlat package.
 - Ideally I would have run everything on a Windows Environment with an IDE like Visual Studio. I used VSCode due to lack of Windows environment.
 
+
+---
+If you liked (or disliked) anything I've done, or want to chat about hobbies, please reach out at gautham.ontri@gmail.com and we can spin some yarn ✌️
