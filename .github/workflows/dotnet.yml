@@ -7,7 +7,10 @@ on:
     branches: [ main ]
 
 jobs:
-  test-and-build-image:
+  # Unit Test Phase - if successful, upload the image to ECR
+  # code coverage reports are also printed - ideally should generate HTML document & upload
+  # to S3 for readability and sharing
+  unittest-deploy-image:
     runs-on: ubuntu-latest
     environment: development_environment
     steps:
@@ -31,7 +34,7 @@ jobs:
       run: cat $(find TestResults -name coverage.cobertura.xml) 
     - name: Echo Build Version
       run: echo ${{ github.sha }}
-    # If tests are successful, push to ECR
+    # If tests are successful, push to ECR as latest and versioned
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -49,3 +52,33 @@ jobs:
       run: |
         docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REPOSITORY:$IMAGE_TAG
+        docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REPOSITORY:latest
+        docker push $ECR_REPOSITORY:latest
+    
+    # Integration Test Phase - only runs if unit test and building succeeds
+    # but ideally move to another pipeline to have fine control over execution triggers
+    # NOTE: this sets up a new VM for job, hence added delay
+    integration-test:
+      runs-on: ubuntu-latest
+      environment: development_environment
+      steps:
+      # This step checks out the code using github actions (prebuilt module)
+      - uses: actions/checkout@v2
+      - name: Check out code
+        uses: actions/checkout@v2
+      # Build the images 
+      - name: Build docker images
+        run: docker-compose build
+      # Run containers 
+      - name: Setup Environment
+        run: docker-compose start
+      # Publish and run test suite
+      - name: Run tests
+        run: docker-compose run test
+      - name: Dotnet Publish
+        run: dotnet publish -c Release
+      - name: Integration Tests - Business
+        run: dotnet test tests/DevOpsChallenge.SalesApi.Business.UnitTests/bin/Release/net5.0/DevOpsChallenge.SalesApi.Business.UnitTests.dll --collect:"XPlat Code Coverage"
+      # This step never runs due to Integration Test Failure (DB schema related)
+      - name: Echo Test Results
+      run: cat $(find TestResults -name coverage.cobertura.xml) 
