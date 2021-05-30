@@ -73,8 +73,6 @@ jobs:
       - name: Setup Environment
         run: docker-compose start
       # Publish and run test suite
-      - name: Run tests
-        run: docker-compose run test
       - name: Dotnet Publish
         run: dotnet publish -c Release
       - name: Integration Tests - Business
