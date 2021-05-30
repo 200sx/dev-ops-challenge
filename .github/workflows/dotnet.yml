@@ -63,7 +63,6 @@ jobs:
     environment: development_environment
     steps:
     # This step checks out the code using github actions (prebuilt module)
-    - uses: actions/checkout@v2
     - name: Check out code
       uses: actions/checkout@v2
     # Build the images 
