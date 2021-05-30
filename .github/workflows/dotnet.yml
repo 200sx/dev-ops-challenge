@@ -74,9 +74,14 @@ jobs:
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
-    # Run Integration Test Environment in Docker
+    # Initialise Integration Test Environment in Docker
     - name: Build docker images
-      run: docker-compose up
+      run: docker-compose start mssql
+    # Done in two stages to allow application to wait for mmsql to be completely up
+    - name: Wait 10 seconds
+      run: sleep 10
+    - name: Build docker images
+      run: docker-compose start app
     # Publish and run test suite
     - name: Dotnet Publish
       run: dotnet publish -c Release
