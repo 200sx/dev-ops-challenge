@@ -63,8 +63,7 @@ jobs:
     environment: development_environment
     steps:
     # This step checks out the code using github actions (prebuilt module)
-    - name: Check out code
-      uses: actions/checkout@v2
+    - uses: actions/checkout@v2
     # Build the images 
     - name: Build docker images
       run: docker-compose build
