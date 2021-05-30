@@ -65,6 +65,9 @@ jobs:
     steps:
     # This step checks out the code using github actions (prebuilt module)
     - uses: actions/checkout@v2
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
     # Run Integration Test Environment in Docker
     - name: Build docker images
       run: docker-compose up
