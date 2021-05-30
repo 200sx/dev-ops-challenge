@@ -86,7 +86,9 @@ jobs:
     - name: Dotnet Publish
       run: dotnet publish -c Release
     - name: Integration Tests - Business
+      id: run-integration-tests
       run: dotnet test tests/DevOpsChallenge.SalesApi.IntegrationTests/bin/Release/net5.0/DevOpsChallenge.SalesApi.IntegrationTests.dll --collect:"XPlat Code Coverage"
     # This step never runs due to Integration Test Failure (DB schema related)
     - name: Echo Test Results
+      if: success() || failure()
       run: cat $(find TestResults -name coverage.cobertura.xml) 
