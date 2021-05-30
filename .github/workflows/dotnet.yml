@@ -55,28 +55,28 @@ jobs:
         docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REPOSITORY:latest
         docker push $ECR_REPOSITORY:latest
     
-    # Integration Test Phase - only runs if unit test and building succeeds
-    # but ideally move to another pipeline to have fine control over execution triggers
-    # NOTE: this sets up a new VM for job, hence added delay
-    integration-test:
-      runs-on: ubuntu-latest
-      environment: development_environment
-      steps:
-      # This step checks out the code using github actions (prebuilt module)
-      - uses: actions/checkout@v2
-      - name: Check out code
-        uses: actions/checkout@v2
-      # Build the images 
-      - name: Build docker images
-        run: docker-compose build
-      # Run containers 
-      - name: Setup Environment
-        run: docker-compose start
-      # Publish and run test suite
-      - name: Dotnet Publish
-        run: dotnet publish -c Release
-      - name: Integration Tests - Business
-        run: dotnet test tests/DevOpsChallenge.SalesApi.Business.UnitTests/bin/Release/net5.0/DevOpsChallenge.SalesApi.Business.UnitTests.dll --collect:"XPlat Code Coverage"
-      # This step never runs due to Integration Test Failure (DB schema related)
-      - name: Echo Test Results
-      run: cat $(find TestResults -name coverage.cobertura.xml) 
+  # Integration Test Phase - only runs if unit test and building succeeds
+  # but ideally move to another pipeline to have fine control over execution triggers
+  # NOTE: this sets up a new VM for job, hence added delay
+  integration-test:
+    runs-on: ubuntu-latest
+    environment: development_environment
+    steps:
+    # This step checks out the code using github actions (prebuilt module)
+    - uses: actions/checkout@v2
+    - name: Check out code
+      uses: actions/checkout@v2
+    # Build the images 
+    - name: Build docker images
+      run: docker-compose build
+    # Run containers 
+    - name: Setup Environment
+      run: docker-compose start
+    # Publish and run test suite
+    - name: Dotnet Publish
+      run: dotnet publish -c Release
+    - name: Integration Tests - Business
+      run: dotnet test tests/DevOpsChallenge.SalesApi.Business.UnitTests/bin/Release/net5.0/DevOpsChallenge.SalesApi.Business.UnitTests.dll --collect:"XPlat Code Coverage"
+    # This step never runs due to Integration Test Failure (DB schema related)
+    - name: Echo Test Results
+    run: cat $(find TestResults -name coverage.cobertura.xml) 
